@@ -9,7 +9,7 @@ from src.data import LibriSpeechDataset, TextTransform, collate_fn
 from src.models import SpeechRecognitionModel, greedy_decode
 from src.utils import WanDBLogger, cer, wer
 
-SEED = 123
+SEED = 7
 torch.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False

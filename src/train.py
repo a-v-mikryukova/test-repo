@@ -121,7 +121,7 @@ def validate_epoch(model, device, loader, criterion, logger):
             output = output.transpose(0, 1)
             
             loss = criterion(output, labels, input_lengths, label_lengths)
-            val_loss += loss.item() / len(val_loader)
+            val_loss += loss.item() / len(loader)
             
             decoded_preds, decoded_targets = greedy_decode(
                 output.transpose(0, 1), 

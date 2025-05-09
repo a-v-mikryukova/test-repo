@@ -28,6 +28,7 @@ def train(config) -> None:
     train_loader = DataLoader(
         train_dataset,
         batch_size=config["train"]["batch_size"],
+        shuffle=True,
         collate_fn=lambda x: collate_fn(x, text_transform, "train")
     )
 

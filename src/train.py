@@ -130,7 +130,7 @@ def validate_epoch(model, device, loader, criterion, logger):
                 TextTransform()
             )
             
-            if i == 0:
+            if batch_idx == 0:
                   print(f"target: {decoded_targets[0]}")
                   print(f"Predict: {decoded_preds[0]}")
             for j in range(len(decoded_preds)):

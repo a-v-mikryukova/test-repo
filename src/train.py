@@ -32,7 +32,8 @@ def train(config) -> None:
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = SpeechRecognitionModel(**config["model"]).to(device)
+    model = SpeechRecognitionModel(config["model"]["n_cnn_layers"], config["model"]["n_rnn_layers"], config["model"]["rnn_dim"],
+                                  config["model"]["n_class"],config["model"]["n_feats"],config["model"]["stride"], config["model"]["dropout"]).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=config["train"]["learning_rate"])
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
@@ -64,6 +65,11 @@ def train(config) -> None:
                 })
             optimizer.step()
             scheduler.step()
+            if batch_idx % 100 == 0 or batch_idx == data_len:
+                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                    epoch, batch_idx * len(spectrograms), data_len,
+                    100. * batch_idx / len(train_loader), loss.item()))
+
         val_wer = validate(model, device, config, criterion, logger, epoch)
         if val_wer < best_wer:
             best_wer = val_wer
@@ -92,28 +98,31 @@ def validate(model, device, config, criterion, logger, epoch):
         for i, _data in enumerate(val_loader):
             spectrograms, labels, input_lengths, label_lengths = _data
             spectrograms, labels = spectrograms.to(device), labels.to(device)
+            
             output = model(spectrograms)
             output = F.log_softmax(output, dim=2)
             output = output.transpose(0, 1)
+            
             loss = criterion(output, labels, input_lengths, label_lengths)
             val_loss += loss.item() / len(val_loader)
 
             decoded_preds, decoded_targets = greedy_decode(output.transpose(0, 1), labels, label_lengths, text_transform)
-
+            if i == 0:
+                  print(f"target: {decoded_targets[0]}")
+                  print(f"Predict: {decoded_preds[0]}")
             for j in range(len(decoded_preds)):
                 val_cer.append(cer(decoded_targets[j], decoded_preds[j]))
                 val_wer.append(wer(decoded_targets[j], decoded_preds[j]))
 
     avg_cer = sum(val_cer) / len(val_cer)
     avg_wer = sum(val_wer) / len(val_wer)
-    avg_loss = val_loss
 
     logger.log_metrics({
         "val/loss": val_loss,
         "val/cer": avg_cer,
         "val/wer": avg_wer,
     })
-
+    print('Val set: Average loss: {:.4f}, Average CER: {:4f} Average WER: {:.4f}\n'.format(val_loss, avg_cer, avg_wer))
     return avg_wer
 
 

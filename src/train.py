@@ -33,7 +33,7 @@ def main(config):
     criterion = torch.nn.CTCLoss(blank=28).to(device)
     best_wer = float('inf')
     for epoch in range(config["train"]["epochs"]):
-        print(f"\nEpoch {epoch+1}/{config["train"]["epochs"]}")
+        print(f"\nEpoch {epoch+1}")
         train_loss = train_epoch(
             model, device, train_loader, 
             criterion, optimizer, scheduler, logger

@@ -80,6 +80,7 @@ def train_epoch(model, device, loader, criterion, optimizer, scheduler, logger):
     model.train()
     total_loss = 0.0
     data_len = len(loader.dataset)
+    accumulation_steps = 2
     
     for batch_idx, (spectrograms, labels, input_lengths, label_lengths) in enumerate(loader):
         spectrograms = spectrograms.to(device)
@@ -97,8 +98,9 @@ def train_epoch(model, device, loader, criterion, optimizer, scheduler, logger):
                 "train/loss": loss.item(),
                 "train/lr": scheduler.get_last_lr()[0]
             })
-        optimizer.step()
-        scheduler.step()
+        if (batch_idx + 1) % accumulation_steps == 0:
+            optimizer.step()
+            optimizer.zero_grad()
         
         if batch_idx % 100 == 0 or batch_idx == data_len:
                 print('Train Epoch: [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(

@@ -86,7 +86,6 @@ def train_epoch(model, device, loader, criterion, optimizer, scheduler, logger):
         spectrograms = spectrograms.to(device)
         labels = labels.to(device)
         
-        optimizer.zero_grad()
         output = model(spectrograms)
         output = F.log_softmax(output, dim=2)
         output = output.transpose(0, 1)
@@ -100,6 +99,7 @@ def train_epoch(model, device, loader, criterion, optimizer, scheduler, logger):
             })
         if (batch_idx + 1) % accumulation_steps == 0:
             optimizer.step()
+            scheduler.step()
             optimizer.zero_grad()
         
         if batch_idx % 100 == 0 or batch_idx == data_len:

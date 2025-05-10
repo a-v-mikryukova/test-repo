@@ -24,12 +24,10 @@ def main(config):
     model = SpeechRecognitionModel(**config["model"]).to(device)
     
     optimizer = torch.optim.AdamW(model.parameters(), lr=config["train"]["learning_rate"])
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer,
-        max_lr=config["train"]["learning_rate"],
-        steps_per_epoch=int(len(train_loader)),
-        epochs=config["train"]["epochs"],
-        anneal_strategy='linear')
+        T_max=36225,
+        eta_min=0.00001)
     criterion = torch.nn.CTCLoss(blank=28).to(device)
     best_wer = float('inf')
     for epoch in range(config["train"]["epochs"]):
@@ -80,12 +78,11 @@ def train_epoch(model, device, loader, criterion, optimizer, scheduler, logger):
     model.train()
     total_loss = 0.0
     data_len = len(loader.dataset)
-    accumulation_steps = 2
     
     for batch_idx, (spectrograms, labels, input_lengths, label_lengths) in enumerate(loader):
         spectrograms = spectrograms.to(device)
         labels = labels.to(device)
-        
+        optimizer.zero_grad()
         output = model(spectrograms)
         output = F.log_softmax(output, dim=2)
         output = output.transpose(0, 1)
@@ -97,10 +94,8 @@ def train_epoch(model, device, loader, criterion, optimizer, scheduler, logger):
                 "train/loss": loss.item(),
                 "train/lr": scheduler.get_last_lr()[0]
             })
-        if (batch_idx + 1) % accumulation_steps == 0:
-            optimizer.step()
-            scheduler.step()
-            optimizer.zero_grad()
+        optimizer.step()
+        scheduler.step()
         
         if batch_idx % 100 == 0 or batch_idx == data_len:
                 print('Train Epoch: [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(

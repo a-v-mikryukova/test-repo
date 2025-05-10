@@ -26,21 +26,4 @@ def greedy_decode(output, labels, label_lengths, text_transform, blank_label=28,
             example_pred = decode
             example_target = target_indices
 
-    if wandb.run:
-        try:
-            pred_chars = [text_transform.index_map[idx] for idx in example_pred]
-            target_chars = [text_transform.index_map[idx] for idx in example_target]
-
-            table = wandb.Table(columns=["Type", "Text", "Indices", "Characters"])
-            table.add_data("Prediction", " ".join(decoded_text.split()), example_pred, pred_chars)
-            table.add_data("Target", " ".join(target_text.split()), example_target, target_chars)
-
-            wandb.log({
-                "predictions": table,
-                "target_text": target_text,
-                "predicted_text": decoded_text,
-            })
-        except Exception:
-            print(f"Failed to log predictions: {e}")
-
     return decodes, targets

@@ -110,6 +110,7 @@ def validate_epoch(model, device, loader, criterion, logger):
     model.eval()
     val_loss = 0.0
     val_cer, val_wer = [], []
+    examples_table = []
     
     with torch.no_grad():
         for batch_idx, (spectrograms, labels, input_lengths, label_lengths) in enumerate(loader):
@@ -131,8 +132,13 @@ def validate_epoch(model, device, loader, criterion, logger):
             )
             
             if batch_idx == 0:
-                  print(f"target: {decoded_targets[0]}")
-                  print(f"Predict: {decoded_preds[0]}")
+                print(f"target: {decoded_targets[0]}")
+                print(f"Predict: {decoded_preds[0]}")
+                for i in range(min(5, len(decoded_preds))):
+                    examples_table.append([
+                        decoded_targets[i],
+                        decoded_preds[i]
+                    ])
             for j in range(len(decoded_preds)):
                 val_cer.append(cer(decoded_targets[j], decoded_preds[j]))
                 val_wer.append(wer(decoded_targets[j], decoded_preds[j]))
@@ -140,17 +146,21 @@ def validate_epoch(model, device, loader, criterion, logger):
 
     avg_cer = sum(val_cer) / len(val_cer)
     avg_wer = sum(val_wer) / len(val_wer)
-    
+    table = wandb.Table(
+        columns=["Target Text", "Predicted Text"],
+        data=examples_table
+    )
     logger.log_metrics({
         "test/loss": val_loss,
         "test/cer": avg_cer,
-        "test/wer": avg_wer
+        "test/wer": avg_wer,
+        "test/examples": table
     })
     
     print('Test set: Average loss: {:.4f}, Average CER: {:4f} Average WER: {:.4f}\n'.format(val_loss, avg_cer, avg_wer))
 
     
-    return avg_loss, avg_cer, avg_wer
+    return val_loss, avg_cer, avg_wer
 
 if __name__ == "__main__":
     # parser = argparse.ArgumentParser()

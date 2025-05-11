@@ -24,10 +24,12 @@ def main(config):
     model = SpeechRecognitionModel(**config["model"]).to(device)
     
     optimizer = torch.optim.AdamW(model.parameters(), lr=config["train"]["learning_rate"])
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
-        T_max=36225,
-        eta_min=0.00001)
+        max_lr=config["train"]["learning_rate"],
+        steps_per_epoch=int(len(train_loader)),
+        epochs=config["train"]["epochs"],
+        anneal_strategy='linear')
     criterion = torch.nn.CTCLoss(blank=28).to(device)
     best_wer = float('inf')
     for epoch in range(config["train"]["epochs"]):
@@ -82,6 +84,7 @@ def train_epoch(model, device, loader, criterion, optimizer, scheduler, logger):
     for batch_idx, (spectrograms, labels, input_lengths, label_lengths) in enumerate(loader):
         spectrograms = spectrograms.to(device)
         labels = labels.to(device)
+        
         optimizer.zero_grad()
         output = model(spectrograms)
         output = F.log_softmax(output, dim=2)

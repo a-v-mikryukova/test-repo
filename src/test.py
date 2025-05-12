@@ -7,11 +7,11 @@ import torch.nn.functional as F
 
 from src.data import LibriSpeechDataset, TextTransform, collate_fn
 from src.models import SpeechRecognitionModel, greedy_decode
-from src.utils import WanDBLogger, cer, wer
+from src.utils import WanDBLogger, cer, wer, quantize_model, inference_speed
 
 
 @hydra.main(config_path="../configs", config_name="config")
-def test(config) -> None:
+def main(config):
     checkpoint = config["test"]["checkpoint"]
     logger = WanDBLogger(dict(config))
     logger.watch_model = False
@@ -25,7 +25,6 @@ def test(config) -> None:
         msg = f"Error loading checkpoint: {e!s}"
         raise RuntimeError(msg)
 
-    text_transform = TextTransform()
     test_datasets = [LibriSpeechDataset(config["data"]["data_dir"], url)
                     for url in config["data"]["urls"]["test"]]
     test_dataset = torch.utils.data.ConcatDataset(test_datasets)
@@ -36,12 +35,46 @@ def test(config) -> None:
         shuffle=False,
         collate_fn=lambda x: collate_fn(x, text_transform, "test")
     )
+    
+    criterion = torch.nn.CTCLoss(blank=28).to(device)
+    
+    if config.quantization.enable:
+        example_input = next(iter(test_loader))[0][0].unsqueeze(0).to(device)
+        
+        quantized_model = quantize_model(
+            model=model,
+            example_input=example_input,
+            dtype=config.quantization.dtype,
+            backend=config.quantization.backend
+        )
+        
+        torch.save(quantized_model.state_dict(), f"{config['train']['save_dir']}/quantized_model.pth")
+        
+        time = inference_speed(model=quantized_model, test_loader=test_loader)
+        
+        logger.log_metrics({
+            "inference_time": time
+        })
+        
+        test(quantized_model, device, test_loader, criterion, logger)
+    else:
+        time = inference_speed(model=model, test_loader=test_loader)
+        logger.log_metrics({
+            "inference_time": time
+        })
+        test(model, device, test_loader, criterion, logger)
+        
+        
 
+
+
+def test(model, device, test_loader, criterion, logger) -> None:
+
+    text_transform = TextTransform()
     test_loss = 0.0
     test_cer, test_wer = [], []
     total_samples = 0
     examples = []
-    criterion = torch.nn.CTCLoss(blank=28).to(device)
     model.eval()
     with torch.no_grad():
         for batch_idx, (spectrograms, labels, input_lengths, label_lengths) in enumerate(test_loader):

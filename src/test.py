@@ -127,4 +127,4 @@ if __name__ == "__main__":
     # parser.add_argument("--config", default="configs/config.yaml")
     # parser.add_argument("--checkpoint", required=True)
     # args = parser.parse_args()
-    test()
+    main()

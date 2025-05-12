@@ -1,15 +1,22 @@
 import torch
 from torch.quantization import quantize_dynamic
 
+torch.backends.quantized.engine = 'fbgemm'
+
 def quantize_model(model, example_input, dtype='fp16', backend='fbgemm'):
     quantized_model = model
     
     if dtype == 'int8':
+        qconfig = torch.quantization.get_default_qconfig('fbgemm')
+        model.qconfig = qconfig
+        
         quantized_model = quantize_dynamic(
             model,
             {torch.nn.Linear, torch.nn.LSTM},
-            dtype=torch.qint8
+            dtype=torch.qint8,
+            inplace=False
         )
+        example_input= example_input.cuda()
     elif dtype == 'fp16':
         if torch.cuda.is_available():
             quantized_model = model.half().cuda()

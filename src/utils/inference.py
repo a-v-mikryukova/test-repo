@@ -27,21 +27,40 @@ def quantize_model(model, example_input, dtype='fp16', backend='fbgemm'):
     return quantized_model
 
 
-def inference_speed(model, input_tensor, num_runs=100, warmup=10):
+def inference_speed(model, test_loader, num_examples=5, device="cuda"):
     model.eval()
     times = []
+    example_batch = next(iter(test_loader))
+    spectrograms, _, _, _ = example_batch
+    inputs = spectrograms[:num_examples].to(device)
     
     with torch.no_grad():
         for _ in range(warmup):
             _ = model(input_tensor)
     
+    torch.cuda.empty_cache()
     with torch.no_grad():
-        for _ in range(num_runs):
-            start_time = time.perf_counter()
-            _ = model(input_tensor)
-            if torch.cuda.is_available():
-                torch.cuda.synchronize()
-            end_time = time.perf_counter()
-            times.append(end_time - start_time)
+        for _ in range(10):
+            _ = model(inputs)
+        
+        torch.cuda.synchronize()
+        start_time = time.perf_counter()
+        
+        for _ in range(100):
+            _ = model(inputs)
+        
+        torch.cuda.synchronize()
+        end_time = time.perf_counter()
     
-    return sum(times) / len(times) * 1000
+    total_time = (end_time - start_time) * 1000
+    time_per_batch = total_time / 100
+    time_per_sample = time_per_batch / num_examples
+    
+    # Результаты
+    print(f"Inference speed:")
+    print(f"- Total runs: 100 batches")
+    print(f"- Batch size: {num_examples}")
+    print(f"- Time per batch: {time_per_batch:.2f} ms")
+    print(f"- Time per sample: {time_per_sample:.2f} ms")
+    
+    return time_per_sample

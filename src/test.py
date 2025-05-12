@@ -15,6 +15,7 @@ def main(config):
     checkpoint = config["test"]["checkpoint"]
     logger = WanDBLogger(dict(config))
     logger.watch_model = False
+    text_transform = TextTransform()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

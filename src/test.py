@@ -44,8 +44,7 @@ def main(config):
         quantized_model = quantize_model(
             model=model,
             example_input=example_input,
-            dtype=config.quantization.dtype,
-            backend=config.quantization.backend
+            dtype=config.quantization.dtype
         )
         
         torch.save(quantized_model.state_dict(), f"{config['train']['save_dir']}/quantized_model.pth")

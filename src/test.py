@@ -40,8 +40,7 @@ def main(config):
     criterion = torch.nn.CTCLoss(blank=28).to(device)
     
     if config.quantization.enable:
-        model = model.cpu()
-        example_input = next(iter(test_loader))[0][0].unsqueeze(0).cpu()
+        example_input = next(iter(test_loader))[0][0].unsqueeze(0)
         
         quantized_model = quantize_model(
             model=model,
@@ -50,7 +49,6 @@ def main(config):
         )
         
         torch.save(quantized_model.state_dict(), f"{config['train']['save_dir']}/quantized_model.pth")
-        quantized_model.to(device)
         time = inference_speed(model=quantized_model, test_loader=test_loader)
         
         logger.log_metrics({

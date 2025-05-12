@@ -1,3 +1,4 @@
+import time
 import torch
 from torch.quantization import quantize_dynamic
 

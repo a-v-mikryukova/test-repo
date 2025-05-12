@@ -19,11 +19,8 @@ def quantize_model(model, example_input, dtype='fp16', backend='fbgemm'):
         example_input= example_input.to("cpu")
     elif dtype == 'fp16':
         if torch.cuda.is_available():
-            quantized_model = model.half().cuda()
-            example_input = example_input.half().cuda()
-        else:
-            quantized_model = model.half()
-            example_input = example_input.half()
+            quantized_model = model.half().cpu()
+            example_input = example_input.half().cpu()
     else:
         raise ValueError(f"Unsupported dtype: {dtype}")
     

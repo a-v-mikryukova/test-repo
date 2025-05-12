@@ -34,10 +34,6 @@ def inference_speed(model, test_loader, num_examples=5, device="cuda"):
     spectrograms, _, _, _ = example_batch
     inputs = spectrograms[:num_examples].to(device)
     
-    with torch.no_grad():
-        for _ in range(warmup):
-            _ = model(input_tensor)
-    
     torch.cuda.empty_cache()
     with torch.no_grad():
         for _ in range(10):

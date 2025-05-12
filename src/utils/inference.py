@@ -41,7 +41,7 @@ def inference_speed(model, test_loader, dtype, num_examples=5, device="cuda"):
     example_batch = next(iter(test_loader))
     spectrograms, _, _, _ = example_batch
     if dtype == 'fp16':
-        inputs = spectrograms[:num_examples].half().cuda()
+        inputs = spectrograms[:num_examples].half().cpu()
     else:    
         inputs = spectrograms[:num_examples].to("cpu")
     

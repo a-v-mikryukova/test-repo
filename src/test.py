@@ -3,6 +3,7 @@ import torch
 import wandb
 from torch.utils.data import ConcatDataset, DataLoader
 from tqdm import tqdm
+import torch.nn.functional as F
 
 from src.data import LibriSpeechDataset, TextTransform, collate_fn
 from src.models import SpeechRecognitionModel, greedy_decode

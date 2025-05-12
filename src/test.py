@@ -19,9 +19,9 @@ def main(config):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = SpeechRecognitionModel(**config["model"]).to(device)
+    model = SpeechRecognitionModel(**config["model"]).to("cpu")
     try:
-        model.load_state_dict(torch.load(checkpoint, map_location=device))
+        model.load_state_dict(torch.load(checkpoint, map_location="cpu"))
     except Exception as e:
         msg = f"Error loading checkpoint: {e!s}"
         raise RuntimeError(msg)
@@ -37,10 +37,10 @@ def main(config):
         collate_fn=lambda x: collate_fn(x, text_transform, "test")
     )
     
-    criterion = torch.nn.CTCLoss(blank=28).to(device)
+    criterion = torch.nn.CTCLoss(blank=28).to("cpu")
     
     if config.quantization.enable:
-        example_input = next(iter(test_loader))[0][0].unsqueeze(0)
+        example_input = next(iter(test_loader))[0][0].unsqueeze(0).to("cpu")
         
         quantized_model = quantize_model(
             model=model,
@@ -73,11 +73,10 @@ def test(model, device, test_loader, criterion, logger) -> None:
     test_cer, test_wer = [], []
     total_samples = 0
     examples = []
+    model.to("cpu")
     model.eval()
     with torch.no_grad():
         for batch_idx, (spectrograms, labels, input_lengths, label_lengths) in enumerate(test_loader):
-            spectrograms = spectrograms.to(device)
-            labels = labels.to(device)
             
             output = model(spectrograms)
             output = F.log_softmax(output, dim=2)

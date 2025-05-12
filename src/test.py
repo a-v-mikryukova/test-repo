@@ -49,14 +49,14 @@ def main(config):
         )
         
         torch.save(quantized_model.state_dict(), f"{config['train']['save_dir']}/quantized_model.pth")
-        time = inference_speed(model=quantized_model, test_loader=test_loader)
+        time = inference_speed(model=quantized_model, test_loader=test_loader, dtype=config.quantization.dtype)
         
         logger.log_metrics({
             "inference_time": time
         })
         test(quantized_model, device, test_loader, criterion, logger)
     else:
-        time = inference_speed(model=model, test_loader=test_loader)
+        time = inference_speed(model=model, test_loader=test_loader, dtype="None")
         logger.log_metrics({
             "inference_time": time
         })

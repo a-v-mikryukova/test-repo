@@ -53,7 +53,7 @@ def test(config) -> None:
             output = output.transpose(0, 1)
             
             loss = criterion(output, labels, input_lengths, label_lengths)
-            test_loss += loss.item() / len(loader)
+            test_loss += loss.item() / len(test_loader)
             
             decoded_preds, decoded_targets = greedy_decode(
                 output.transpose(0, 1), 

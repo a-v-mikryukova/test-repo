@@ -40,13 +40,18 @@ pruning:
   
 distillation:
   enable: False
-  teacher_checkpoint: "checkpoints/best_teacher.pt"
-  temperature: 3.0
-  alpha: 0.7
+  teacher_checkpoint: "checkpoints/best_model.pth"
   student_arch:
     n_cnn_layers: 2
     n_rnn_layers: 3
-    rnn_dim: 256  
+    rnn_dim: 256
+    n_class: 29
+    n_feats: 128
+    stride: 2
+    dropout: 0.1
+  temperature: 3.0
+  alpha: 0.7
+  epochs: 50 
   
 hydra:
   run:

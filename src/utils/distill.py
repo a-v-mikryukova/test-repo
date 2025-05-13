@@ -77,10 +77,8 @@ def train_distill(model,teacher_model,device, train_loader, criterion, optimizer
         
         if batch_idx % 100 == 0 or batch_idx == data_len:
             logger.log_metrics({
-                "train/loss": loss.item(),
-                "train/lr": scheduler.get_last_lr()[0],
-                "train/ctc_loss": ctc_loss.item(),
-                "train/distill_loss": distill_loss.item()
+                "train/loss": ctc_loss.item(),
+                "train/lr": scheduler.get_last_lr()[0]
             })
             
             print(f'Epoch: {epoch} [{batch_idx * len(spectrograms)}/{data_len} '

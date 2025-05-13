@@ -52,14 +52,14 @@ def main(config):
         logger.log_checkpoint(f"{config['train']['save_dir']}/quantized_model.pth")
         final = SpeechRecognitionModel(**config["model"])
         final.load_state_dict(torch.load(config["quantization"]["checkpoint"]))
-        time = inference_speed(model=quantized_model, test_loader=test_loader, dtype=config.quantization.dtype, device=device)
+        time = inference_speed(model=quantized_model, test_loader=test_loader, dtype=config.quantization.dtype, device="cpu")
         
         logger.log_metrics({
             "inference_time": time
         })
         test(quantized_model, device, test_loader, criterion, logger)
     else:
-        time = inference_speed(model=model, test_loader=test_loader, dtype="None", device=device)
+        time = inference_speed(model=model, test_loader=test_loader, dtype="None", device="cpu")
         logger.log_metrics({
             "inference_time": time
         })

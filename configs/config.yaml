@@ -26,6 +26,18 @@ train:
 test:
   checkpoint: "./checkpoints/best_model.pth"
 
+quantization:
+  enable: False
+  dtype: "int8"
+  checkpoint: "./checkpoints/quantized_model.pth"
+
+pruning:
+  enable: False
+  rate: 0.3
+  method: "l1_unstructured"
+  fine_tune_epochs: 5
+  checkpoint: "./checkpoints/pruned_model.pth"  
+
 hydra:
   run:
     dir: .

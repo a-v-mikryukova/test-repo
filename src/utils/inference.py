@@ -1,6 +1,7 @@
 import time
 import torch
 from torch.quantization import quantize_dynamic
+import torch.nn.utils.prune as prune
 
 torch.backends.quantized.engine = 'fbgemm'
 
@@ -30,6 +31,25 @@ def quantize_model(model, example_input, dtype='fp16', backend='fbgemm'):
         quantized_model(example_input)
     
     return quantized_model
+
+def global_pruning(model, pruning_rate=0.2, method="l1_unstructured"):
+    parameters_to_prune = [
+        (module, 'weight') 
+        for module in model.modules() 
+        if isinstance(module, torch.nn.Conv2d)
+    ]
+    
+    prune.global_unstructured(
+        parameters_to_prune,
+        pruning_method=prune.L1Unstructured,
+        amount=pruning_rate
+    )
+
+    for module, _ in parameters_to_prune:
+        prune.remove(module, 'weight')
+    
+    return model
+    
 
 
 def inference_speed(model, test_loader, dtype, device, num_examples=5):

@@ -85,9 +85,9 @@ def main(config):
         torch.save(model.state_dict(), f"{config['train']['save_dir']}/pruned_model.pth")
         logger.log_checkpoint(f"{config['train']['save_dir']}/pruned_model.pth")
     time_inf = inference_speed(model=model, test_loader=val_loader, dtype="None", device="cpu")
-        logger.log_metrics({
-            "inference_time": time_inf
-        })    
+    logger.log_metrics({
+        "inference_time": time_inf
+    })    
             
 
 

@@ -1,6 +1,6 @@
 from .logger import WanDBLogger
 from .metrics import avg_wer, cer, wer
-from .inference import quantize_model, inference_speed
+from .inference import quantize_model, inference_speed, global_pruning
 
 __all__ = [
     "WanDBLogger",
@@ -8,5 +8,6 @@ __all__ = [
     "cer",
     "wer",
     "quantize_model",
-    "inference_speed"
+    "inference_speed",
+    "global_pruning"
 ]

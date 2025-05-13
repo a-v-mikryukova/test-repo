@@ -41,9 +41,6 @@ def train_distill(model,teacher_model,device, train_loader, criterion, optimizer
     for batch_idx, (spectrograms, labels, input_lengths, label_lengths) in enumerate(train_loader):
         spectrograms = spectrograms.to(device)
         labels = labels.to(device)
-        input_lengths = input_lengths.to(device)
-        label_lengths = label_lengths.to(device)
-        
         optimizer.zero_grad()
         
         with torch.no_grad():

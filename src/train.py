@@ -24,11 +24,14 @@ def main(config):
     model = SpeechRecognitionModel(**config["model"]).to(device)
     
     optimizer = torch.optim.AdamW(model.parameters(), lr=config["train"]["learning_rate"])
+    n_epochs = config["train"]["epochs"]
+    if config.pruning.enable:
+        n_epochs += config.pruning.fine_tune_epochs
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer,
         max_lr=config["train"]["learning_rate"],
         steps_per_epoch=int(len(train_loader)),
-        epochs=config["train"]["epochs"],
+        epochs=n_epochs,
         anneal_strategy='linear')
     criterion = torch.nn.CTCLoss(blank=28).to(device)
     best_wer = float('inf')
@@ -60,7 +63,7 @@ def main(config):
         
             val_loss, val_cer, val_wer = validate_epoch(model, device, val_loader, criterion, logger)
 
-        time_inf = inference_speed(model=model, test_loader=val_loader, dtype="None", device=device)
+        time_inf = inference_speed(model=model, test_loader=val_loader, dtype="None", device="cpu")
         logger.log_metrics({
             "inference_time": time_inf
         })

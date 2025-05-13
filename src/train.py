@@ -26,7 +26,7 @@ def main(config):
         teacher.load_state_dict(torch.load(config.distillation.teacher_checkpoint, map_location=device))
         student = SpeechRecognitionModel(**config.distillation.student_arch).to(device)
         model = student
-        print(f"Teacher model loaded. Student params: {sum(p.numel() for p in student.parameters()/1e6:.1f}M")
+        print(f"Teacher model loaded. Student params: {sum(p.numel() for p in student.parameters()) / 1e6:.1f}M")
     else:
         model = SpeechRecognitionModel(**config["model"]).to(device)
         print(f"Standard training. Model params: {sum(p.numel() for p in model.parameters()/1e6:.1f}M")

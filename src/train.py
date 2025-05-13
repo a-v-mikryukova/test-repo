@@ -47,6 +47,26 @@ def main(config):
             best_wer = val_wer
             torch.save(model.state_dict(), f"{config['train']['save_dir']}/best_model.pth")
             logger.log_checkpoint(f"{config['train']['save_dir']}/best_model.pth")
+            
+    if config.pruning.enable:
+        global_pruning(model, config.pruning.rate)
+        
+        print(f"\nFine-tuning after pruning ({config.pruning.rate*100}% sparsity)")
+        val_loss, val_cer, val_wer = 0, 0, 0
+        for epoch in range(config.pruning.fine_tune_epochs):
+            train_loss = train_epoch(
+                model, device, train_loader, 
+                criterion, optimizer, scheduler, logger)
+        
+            val_loss, val_cer, val_wer = validate_epoch(model, device, val_loader, criterion, logger)
+
+        time_inf = inference_speed(model=model, test_loader=val_loader, dtype="None", device=device)
+        logger.log_metrics({
+            "inference_time": time_inf
+        })
+        torch.save(model.state_dict(), f"{config['train']['save_dir']}/pruned_model.pth")
+        logger.log_checkpoint(f"{config['train']['save_dir']}/pruned_model.pth")
+            
 
 
 def get_dataloaders(config):

@@ -36,8 +36,18 @@ pruning:
   rate: 0.3
   method: "l1_unstructured"
   fine_tune_epochs: 5
-  checkpoint: "./checkpoints/pruned_model.pth"  
-
+  checkpoint: "./checkpoints/pruned_model.pth" 
+  
+distillation:
+  enable: False
+  teacher_checkpoint: "checkpoints/best_teacher.pt"
+  temperature: 3.0
+  alpha: 0.7
+  student_arch:
+    n_cnn_layers: 2
+    n_rnn_layers: 3
+    rnn_dim: 256  
+  
 hydra:
   run:
     dir: .

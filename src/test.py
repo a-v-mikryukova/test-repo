@@ -49,6 +49,7 @@ def main(config):
         )
         
         torch.save(quantized_model.state_dict(), f"{config['train']['save_dir']}/quantized_model.pth")
+        logger.log_checkpoint(f"{config['train']['save_dir']}/quantized_model.pth")
         time = inference_speed(model=quantized_model, test_loader=test_loader, dtype=config.quantization.dtype)
         
         logger.log_metrics({

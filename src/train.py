@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 
 from src.data import LibriSpeechDataset, TextTransform, collate_fn
 from src.models import SpeechRecognitionModel, greedy_decode
-from src.utils import WanDBLogger, cer, wer, global_pruning, inference_speed
+from src.utils import WanDBLogger, cer, wer, global_pruning, inference_speed, train_distill
 
 SEED = 7
 torch.manual_seed(SEED)
@@ -84,6 +84,10 @@ def main(config):
         })
         torch.save(model.state_dict(), f"{config['train']['save_dir']}/pruned_model.pth")
         logger.log_checkpoint(f"{config['train']['save_dir']}/pruned_model.pth")
+    time_inf = inference_speed(model=model, test_loader=val_loader, dtype="None", device="cpu")
+        logger.log_metrics({
+            "inference_time": time_inf
+        })    
             
 
 

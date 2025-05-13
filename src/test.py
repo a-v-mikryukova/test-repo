@@ -50,12 +50,8 @@ def main(config):
         
         torch.save(quantized_model.state_dict(), f"{config['train']['save_dir']}/quantized_model.pth")
         logger.log_checkpoint(f"{config['train']['save_dir']}/quantized_model.pth")
-        final = SpeechRecognitionModel(**config["model"]).to(device)
-        try:
-            final.load_state_dict(torch.load(config["quantization"]["checkpoint"], map_location=device))
-        except Exception as e:
-            msg = f"Error loading checkpoint: {e!s}"
-            raise RuntimeError(msg)
+        final = SpeechRecognitionModel(**config["model"])
+        final.load_state_dict(torch.load(config["quantization"]["checkpoint"]))
         time = inference_speed(model=quantized_model, test_loader=test_loader, dtype=config.quantization.dtype, device=device)
         
         logger.log_metrics({

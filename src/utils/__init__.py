@@ -1,6 +1,7 @@
 from .logger import WanDBLogger
 from .metrics import avg_wer, cer, wer
 from .inference import quantize_model, inference_speed, global_pruning
+from .distill import train_distill
 
 __all__ = [
     "WanDBLogger",
@@ -9,5 +10,6 @@ __all__ = [
     "wer",
     "quantize_model",
     "inference_speed",
-    "global_pruning"
+    "global_pruning",
+    "train_distill"
 ]

@@ -32,8 +32,8 @@ def quantize_model(model, example_input, dtype='fp16', backend='fbgemm'):
     return quantized_model
 
 
-def inference_speed(model, test_loader, dtype, num_examples=5, device="cuda"):
-    model.to("cpu")
+def inference_speed(model, test_loader, dtype, device, num_examples=5):
+    model.to(device)
     model.eval()
     times = []
     example_batch = next(iter(test_loader))
@@ -41,17 +41,20 @@ def inference_speed(model, test_loader, dtype, num_examples=5, device="cuda"):
     if dtype == 'fp16':
         inputs = spectrograms[:num_examples].half().cpu()
     else:    
-        inputs = spectrograms[:num_examples].to("cpu")
-    
+        inputs = spectrograms[:num_examples].to(device)
+
+    torch.cuda.empty_cache()
     with torch.no_grad():
         for _ in range(10):
             _ = model(inputs)
-
+        
+        torch.cuda.synchronize()
         start_time = time.perf_counter()
         
         for _ in range(100):
             _ = model(inputs)
 
+        torch.cuda.synchronize()
         end_time = time.perf_counter()
     
     total_time = (end_time - start_time) * 1000

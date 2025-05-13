@@ -21,8 +21,17 @@ def main(config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     train_loader, val_loader = get_dataloaders(config)
-    model = SpeechRecognitionModel(**config["model"]).to(device)
+    if config.distillation.enable:
+        teacher = SpeechRecognitionModel(**config["model"]).to(device)
+        teacher.load_state_dict(torch.load(config.distillation.teacher_checkpoint, map_location=device))
+        student = SpeechRecognitionModel(**config.distillation.student_arch).to(device)
+        model = student
+        print(f"Teacher model loaded. Student params: {sum(p.numel() for p in student.parameters()/1e6:.1f}M")
+    else:
+        model = SpeechRecognitionModel(**config["model"]).to(device)
+        print(f"Standard training. Model params: {sum(p.numel() for p in model.parameters()/1e6:.1f}M")
     
+    model = SpeechRecognitionModel(**config["model"]).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=config["train"]["learning_rate"])
     n_epochs = config["train"]["epochs"]
     if config.pruning.enable:
@@ -37,10 +46,16 @@ def main(config):
     best_wer = float('inf')
     for epoch in range(config["train"]["epochs"]):
         print(f"\nEpoch {epoch+1}")
-        train_loss = train_epoch(
-            model, device, train_loader, 
-            criterion, optimizer, scheduler, logger
-        )
+        if config.distillation.enable:
+            train_loss = train_distill(
+                model, teacher, device, train_loader, 
+                criterion, optimizer, scheduler, logger
+                )
+        else:
+            train_loss = train_epoch(
+                model, device, train_loader, 
+                criterion, optimizer, scheduler, logger
+            )
         
         val_loss, val_cer, val_wer = validate_epoch(
             model, device, val_loader, criterion, logger

@@ -37,7 +37,7 @@ def main(config):
         collate_fn=lambda x: collate_fn(x, text_transform, "test")
     )
     
-    criterion = torch.nn.CTCLoss(blank=28).to("cpu")
+    criterion = torch.nn.CTCLoss(blank=28).to(device)
     
     if config.quantization.enable:
         example_input = next(iter(test_loader))[0][0].unsqueeze(0).to("cpu")
@@ -50,14 +50,20 @@ def main(config):
         
         torch.save(quantized_model.state_dict(), f"{config['train']['save_dir']}/quantized_model.pth")
         logger.log_checkpoint(f"{config['train']['save_dir']}/quantized_model.pth")
-        time = inference_speed(model=quantized_model, test_loader=test_loader, dtype=config.quantization.dtype)
+        final = SpeechRecognitionModel(**config["model"]).to(device)
+        try:
+            final.load_state_dict(torch.load(config["quantization"]["checkpoint"], map_location=device))
+        except Exception as e:
+            msg = f"Error loading checkpoint: {e!s}"
+            raise RuntimeError(msg)
+        time = inference_speed(model=quantized_model, test_loader=test_loader, dtype=config.quantization.dtype, device=device)
         
         logger.log_metrics({
             "inference_time": time
         })
         test(quantized_model, device, test_loader, criterion, logger)
     else:
-        time = inference_speed(model=model, test_loader=test_loader, dtype="None")
+        time = inference_speed(model=model, test_loader=test_loader, dtype="None", device=device)
         logger.log_metrics({
             "inference_time": time
         })
@@ -74,10 +80,11 @@ def test(model, device, test_loader, criterion, logger) -> None:
     test_cer, test_wer = [], []
     total_samples = 0
     examples = []
-    model.to("cpu")
+    model.to(device)
     model.eval()
     with torch.no_grad():
         for batch_idx, (spectrograms, labels, input_lengths, label_lengths) in enumerate(test_loader):
+            spectrograms, labels = spectrograms.to(device), labels.to(device)
             
             output = model(spectrograms)
             output = F.log_softmax(output, dim=2)

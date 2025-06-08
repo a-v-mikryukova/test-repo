@@ -47,11 +47,9 @@ def main(config):
             example_input=example_input,
             dtype=config.quantization.dtype
         )
-        
+        print(f" model loaded.Quantized model params: {sum(p.numel() for p in quantized_model.parameters()) / 1e6:.1f}M")
         torch.save(quantized_model.state_dict(), f"{config['train']['save_dir']}/quantized_model.pth")
         logger.log_checkpoint(f"{config['train']['save_dir']}/quantized_model.pth")
-        final = SpeechRecognitionModel(**config["model"])
-        final.load_state_dict(torch.load(config["quantization"]["checkpoint"]))
         time = inference_speed(model=quantized_model, test_loader=test_loader, dtype=config.quantization.dtype, device="cpu")
         
         logger.log_metrics({

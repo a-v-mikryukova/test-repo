@@ -30,8 +30,6 @@ def main(config):
     else:
         model = SpeechRecognitionModel(**config["model"]).to(device)
         print(f"Standard training. Model params: {sum(p.numel() for p in model.parameters())/1e6:.1f}M")
-    
-    model = SpeechRecognitionModel(**config["model"]).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=config["train"]["learning_rate"])
     n_epochs = config["train"]["epochs"]
     if config.pruning.enable:
@@ -82,6 +80,7 @@ def main(config):
         logger.log_metrics({
             "inference_time": time_inf
         })
+        print(f"model loaded. Pruned model params: {sum(p.numel() for p in model.parameters()) / 1e6:.1f}M")
         torch.save(model.state_dict(), f"{config['train']['save_dir']}/pruned_model.pth")
         logger.log_checkpoint(f"{config['train']['save_dir']}/pruned_model.pth")
     time_inf = inference_speed(model=model, test_loader=val_loader, dtype="None", device="cpu")

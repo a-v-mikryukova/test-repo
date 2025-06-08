@@ -120,8 +120,19 @@ def test(model, device, test_loader, criterion, logger) -> None:
         "test/wer": avg_wer,
         "test/examples": table
     })
-    
-    print('Test set: Average loss: {:.4f}, Average CER: {:4f} Average WER: {:.4f}\n'.format(test_loss, avg_cer, avg_wer))            
+    print('Test set: Average loss: {:.4f}, Average CER: {:4f} Average WER: {:.4f}\n'.format(test_loss, avg_cer, avg_wer))
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    param_size = 0
+    for param in model.parameters():
+        param_size += param.nelement() * param.element_size()
+    buffer_size = 0
+    for buffer in model.buffers():
+        buffer_size += buffer.nelement() * buffer.element_size()
+    total_size = (param_size + buffer_size) / (1024 ** 2) 
+    print(f"Total parameters: {total_params:,} ({total_params/1e6:.2f}M)")
+    print(f"Trainable parameters: {trainable_params:,} ({trainable_params/1e6:.2f}M)")
+    print(f"Model memory size: {total_size:.2f} MB")
 
 
 if __name__ == "__main__":

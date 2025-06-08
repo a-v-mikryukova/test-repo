@@ -55,7 +55,7 @@ def main(config):
         logger.log_metrics({
             "inference_time": time
         })
-        test(quantized_model, device, test_loader, criterion, logger)
+        test(quantized_model, device="cpu", test_loader, criterion, logger)
     else:
         time = inference_speed(model=model, test_loader=test_loader, dtype="None", device="cpu")
         logger.log_metrics({

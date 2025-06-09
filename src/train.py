@@ -39,7 +39,7 @@ def main(config):
         max_lr=config["train"]["learning_rate"],
         steps_per_epoch=int(len(train_loader)),
         epochs=n_epochs,
-        anneal_strategy='cos')
+        anneal_strategy='linear')
     criterion = torch.nn.CTCLoss(blank=28).to(device)
     best_wer = float('inf')
     for epoch in range(config["train"]["epochs"]):

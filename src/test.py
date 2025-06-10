@@ -4,6 +4,8 @@ import wandb
 from torch.utils.data import ConcatDataset, DataLoader
 from tqdm import tqdm
 import torch.nn.functional as F
+import numpy as np
+from pathlib import Path
 
 from src.data import LibriSpeechDataset, TextTransform, collate_fn
 from src.models import SpeechRecognitionModel, greedy_decode
@@ -76,8 +78,12 @@ def test(model, device, test_loader, criterion, logger) -> None:
     examples = []
     model.to(device)
     model.eval()
+
+    temp_audio_dir = Path("temp_audio")
+    temp_audio_dir.mkdir(exist_ok=True)
+    
     with torch.no_grad():
-        for batch_idx, (spectrograms, labels, input_lengths, label_lengths) in enumerate(test_loader):
+        for batch_idx, (spectrograms, labels, input_lengths, label_lengths, waveforms) in enumerate(test_loader):
             spectrograms, labels = spectrograms.to(device), labels.to(device)
             
             output = model(spectrograms)
@@ -98,7 +104,20 @@ def test(model, device, test_loader, criterion, logger) -> None:
                 print(f"target: {decoded_targets[0]}")
                 print(f"Predict: {decoded_preds[0]}")
                 for i in range(min(5, len(decoded_preds))):
+                    audio_data = waveforms[i].squeeze(0).numpy()
+                    
+                    audio_path = temp_audio_dir / f"sample_{batch_idx}_{i}.wav"
+       
+                    torchaudio.save(
+                        str(audio_path),
+                        torch.tensor(audio_data).unsqueeze(0),
+                        16000
+                    )
+                    
                     examples.append([
+                        wandb.Audio(str(audio_path), 
+                                   caption=f"Sample {batch_idx}_{i}",
+                                   sample_rate=16000),
                         decoded_targets[i],
                         decoded_preds[i]
                     ])
@@ -109,7 +128,7 @@ def test(model, device, test_loader, criterion, logger) -> None:
     avg_cer = sum(test_cer) / len(test_cer)
     avg_wer = sum(test_wer) / len(test_wer)
     table = wandb.Table(
-        columns=["Target Text", "Predicted Text"],
+        columns=["Audio", "Target Text", "Predicted Text"],
         data=examples
     )
     logger.log_metrics({

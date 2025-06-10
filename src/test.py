@@ -6,6 +6,7 @@ from tqdm import tqdm
 import torch.nn.functional as F
 import numpy as np
 from pathlib import Path
+import torchaudio
 
 from src.data import LibriSpeechDataset, TextTransform, collate_fn
 from src.models import SpeechRecognitionModel, greedy_decode

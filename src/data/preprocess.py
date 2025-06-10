@@ -77,10 +77,13 @@ def collate_fn(batch, text_transform, feature_type="train", sample_rate=16000, n
     labels = []
     input_lengths = []
     label_lengths = []
-
+    waveforms = [] 
+    
     audio_transform = get_featurizer(sample_rate, n_mels, train=(feature_type == "train"))
 
     for (waveform, _, utterance, _, _, _) in batch:
+        waveforms.append(waveform.clone())
+        
         spec = audio_transform(waveform).squeeze(0).transpose(0, 1)
         spectrograms.append(spec)
 
@@ -93,4 +96,4 @@ def collate_fn(batch, text_transform, feature_type="train", sample_rate=16000, n
     spectrograms = nn.utils.rnn.pad_sequence(spectrograms, batch_first=True).unsqueeze(1).transpose(2, 3)
     labels = nn.utils.rnn.pad_sequence(labels,batch_first=True)
 
-    return spectrograms, labels, input_lengths, label_lengths
+    return spectrograms, labels, input_lengths, label_lengths, waveforms
